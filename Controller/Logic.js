@@ -26,6 +26,7 @@ exports.getAllUsers = async (req, res) => {
 
 exports.generateSalarySlip = async (req, res) => {
   const { userId, month, daysWorked } = req.body;
+
   try {
     if (req.user.role !== "Accounts") {
       return res.status(403).json({ error: "Access denied" });
@@ -35,7 +36,7 @@ exports.generateSalarySlip = async (req, res) => {
       return res.status(400).json({ error: "All fields are required" });
     }
 
-    const user = await Employee.findById(userId); // Use Employee
+    const user = await Employee.findById(userId);
     if (!user) {
       return res.status(404).json({ error: "Employee not found" });
     }
@@ -47,127 +48,133 @@ exports.generateSalarySlip = async (req, res) => {
     const pdfDir = path.join(__dirname, "../salary_slips");
     const pdfPath = path.join(pdfDir, pdfName);
 
-    // Create salary_slips directory if it doesn't exist
     ensureDirectoryExistence(pdfDir);
 
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
-    doc.pipe(fs.createWriteStream(pdfPath));
+    // Create PDF and wait for it to finish writing
+    await new Promise((resolve, reject) => {
+      const doc = new PDFDocument({ size: "A4", margin: 50 });
+      const stream = fs.createWriteStream(pdfPath);
+      doc.pipe(stream);
 
-    // Header Section
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(24)
-      .fillColor("#1e3a8a")
-      .text("Promark Techsolutions Pvt. Ltd.", 50, 30, { align: "center" });
+      // Header
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(24)
+        .fillColor("#1e3a8a")
+        .text("Promark Techsolutions Pvt. Ltd.", 50, 30, { align: "center" });
 
-    doc
-      .fontSize(10)
-      .fillColor("#f97316") // Saffron for "Proudly"
-      .text("Proudly ", 230, 60, { continued: true })
-      .fillColor("yellow") // White for "Made"
-      .text("Made ", { continued: true })
-      .fillColor("#16a34a") // Green for "in India"
-      .text("in India", { continued: false });
-    doc
-      .moveTo(50, 80)
-      .lineTo(550, 80)
-      .strokeColor("#3b82f6")
-      .lineWidth(2)
-      .stroke();
+      doc
+        .fontSize(10)
+        .fillColor("#f97316")
+        .text("Proudly ", 230, 60, { continued: true })
+        .fillColor("yellow")
+        .text("Made ", { continued: true })
+        .fillColor("#16a34a")
+        .text("in India");
 
-    // Title
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(18)
-      .fillColor("#1e3a8a")
-      .text(`Salary Slip for ${month}`, 50, 100, { align: "center" });
+      doc
+        .moveTo(50, 80)
+        .lineTo(550, 80)
+        .strokeColor("#3b82f6")
+        .lineWidth(2)
+        .stroke();
 
-    // Employee Details Section
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(14)
-      .fillColor("#1e40af")
-      .text("Employee Details", 50, 140);
-    doc
-      .moveTo(50, 155)
-      .lineTo(550, 155)
-      .strokeColor("#e0e7ff")
-      .lineWidth(1)
-      .stroke();
+      // Title
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(18)
+        .fillColor("#1e3a8a")
+        .text(`Salary Slip for ${month}`, 50, 100, { align: "center" });
 
-    doc
-      .font("Helvetica")
-      .fontSize(12)
-      .fillColor("#1f2937")
-      .text(`Name: ${user.username}`, 50, 170);
+      // Employee Details
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(14)
+        .fillColor("#1e40af")
+        .text("Employee Details", 50, 140);
+      doc
+        .moveTo(50, 155)
+        .lineTo(550, 155)
+        .strokeColor("#e0e7ff")
+        .lineWidth(1)
+        .stroke();
 
-    // Salary Details Section
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(14)
-      .fillColor("#1e40af")
-      .text("Salary Details", 50, 250);
-    doc
-      .moveTo(50, 265)
-      .lineTo(550, 265)
-      .strokeColor("#e0e7ff")
-      .lineWidth(1)
-      .stroke();
+      doc
+        .font("Helvetica")
+        .fontSize(12)
+        .fillColor("#1f2937")
+        .text(`Name: ${user.username}`, 50, 170);
 
-    doc
-      .font("Helvetica")
-      .fontSize(12)
-      .fillColor("#1f2937")
-      .text(`Month: ${month}`, 50, 280);
-    doc.text(`Days Worked: ${daysWorked}`, 50, 300);
-    doc.text(`Daily Salary Rate: ₹${dailySalary.toFixed(2)}`, 50, 320);
-    doc
-      .font("Helvetica-Bold")
-      .text(`Total Salary: ₹${calculatedSalary.toFixed(2)}`, 50, 340);
+      // Salary Details
+      doc
+        .font("Helvetica-Bold")
+        .fontSize(14)
+        .fillColor("#1e40af")
+        .text("Salary Details", 50, 250);
+      doc
+        .moveTo(50, 265)
+        .lineTo(550, 265)
+        .strokeColor("#e0e7ff")
+        .lineWidth(1)
+        .stroke();
 
-    // Company Contact Information
-    doc
-      .moveTo(50, 380)
-      .lineTo(550, 380)
-      .strokeColor("#e0e7ff")
-      .lineWidth(1)
-      .stroke();
-    doc
-      .font("Helvetica")
-      .fontSize(10)
-      .fillColor("#4b5563")
-      .text(
-        "Promark Corporate Mansion, Plot No E-250, Industrial Area 8-B, Mohali, Punjab, India-160071",
-        50,
-        400,
-        { align: "center" }
-      );
-    doc.text("Contact: 1800 103 8878 | Email: info@promark.co.in", 50, 415, {
-      align: "center",
+      doc
+        .font("Helvetica")
+        .fontSize(12)
+        .fillColor("#1f2937")
+        .text(`Month: ${month}`, 50, 280)
+        .text(`Days Worked: ${daysWorked}`, 50, 300)
+        .text(`Daily Salary Rate: ₹${dailySalary.toFixed(2)}`, 50, 320)
+        .font("Helvetica-Bold")
+        .text(`Total Salary: ₹${calculatedSalary.toFixed(2)}`, 50, 340);
+
+      // Footer
+      doc
+        .moveTo(50, 380)
+        .lineTo(550, 380)
+        .strokeColor("#e0e7ff")
+        .lineWidth(1)
+        .stroke();
+      doc
+        .font("Helvetica")
+        .fontSize(10)
+        .fillColor("#4b5563")
+        .text(
+          "Promark Corporate Mansion, Plot No E-250, Industrial Area 8-B, Mohali, Punjab, India-160071",
+          50,
+          400,
+          { align: "center" }
+        )
+        .text("Contact: 1800 103 8878 | Email: info@promark.co.in", 50, 415, {
+          align: "center",
+        });
+
+      doc
+        .font("Helvetica-Oblique")
+        .fontSize(8)
+        .fillColor("#6b7280")
+        .text(
+          "This is a system-generated document. For queries, contact HR at hr@promark.co.in.",
+          50,
+          460,
+          { align: "center" }
+        )
+        .text(
+          "© 2025 Promark Techsolutions Pvt. Ltd. All rights reserved.",
+          50,
+          475,
+          {
+            align: "center",
+          }
+        );
+
+      doc.end();
+
+      stream.on("finish", resolve);
+      stream.on("error", reject);
     });
 
-    // Footer
-    doc
-      .font("Helvetica-Oblique")
-      .fontSize(8)
-      .fillColor("#6b7280")
-      .text(
-        "This is a system-generated document. For queries, contact HR at hr@promark.co.in.",
-        50,
-        460,
-        { align: "center" }
-      );
-    doc.text(
-      "© 2025 Promark Techsolutions Pvt. Ltd. All rights reserved.",
-      50,
-      475,
-      {
-        align: "center",
-      }
-    );
-
-    doc.end();
-
+    // Save to DB after PDF generation
     const salarySlip = new SalarySlip({
       userId,
       userName: user.username,
@@ -176,6 +183,7 @@ exports.generateSalarySlip = async (req, res) => {
       salary: calculatedSalary,
       pdfPath,
     });
+
     await salarySlip.save();
 
     res.json({ _id: salarySlip._id, pdfUrl: `/salary_slips/${pdfName}` });
@@ -292,7 +300,10 @@ exports.deleteUser = async (req, res) => {
 
     res.json({ message: "Employee deleted successfully" });
   } catch (err) {
-    console.error(`Error deleting employee with ID ${req.params.id}:`, err.stack);
+    console.error(
+      `Error deleting employee with ID ${req.params.id}:`,
+      err.stack
+    );
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 };
@@ -308,13 +319,17 @@ exports.addEmployee = async (req, res) => {
 
     const existing = await Employee.findOne({ email });
     if (existing) {
-      return res.status(409).json({ error: "Employee with this email already exists" });
+      return res
+        .status(409)
+        .json({ error: "Employee with this email already exists" });
     }
 
     const employee = new Employee({ username, email, baseSalary });
     await employee.save();
 
-    res.status(201).json({ message: "Employee added successfully", user: employee }); // Return 'user' for frontend consistency
+    res
+      .status(201)
+      .json({ message: "Employee added successfully", user: employee }); // Return 'user' for frontend consistency
   } catch (error) {
     console.error("Error adding employee:", error.stack);
     res.status(500).json({ error: "Server error" });
@@ -331,5 +346,3 @@ exports.getAllEmployees = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
-
