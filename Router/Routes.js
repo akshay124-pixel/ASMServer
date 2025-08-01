@@ -10,7 +10,7 @@ const {
   addEmployee,
   getAllEmployees,
 } = require("../Controller/Logic");
-const { verifyToken } = require("../utils/config Jwt");
+const { verifyToken } = require("../utils/config jwt");
 
 router.get("/users", verifyToken, getAllUsers);
 router.post("/salary-slip", verifyToken, generateSalarySlip);
