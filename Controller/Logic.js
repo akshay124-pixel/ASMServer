@@ -105,9 +105,6 @@ exports.generateSalarySlip = async (req, res) => {
   }
 };
 
-// Controller/Logic.js
-const path = require("path");
-
 exports.getAllSalarySlips = async (req, res) => {
   try {
     const slips = await SalarySlip.find().populate("userId");
