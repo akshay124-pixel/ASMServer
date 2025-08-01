@@ -9,7 +9,12 @@ const path = require("path");
 const app = express();
 const port = 4000;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://asms-wine.vercel.app",
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Route
