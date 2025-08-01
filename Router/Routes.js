@@ -10,14 +10,14 @@ const {
   addEmployee,
   getAllEmployees,
 } = require("../Controller/Logic");
-const { verifyToken } = require("../utils/config jwt");
+const { verifyToken } = require("../Utils/configjwt");
 
 router.get("/users", verifyToken, getAllUsers);
 router.post("/salary-slip", verifyToken, generateSalarySlip);
 router.get("/salary-slips", verifyToken, getAllSalarySlips);
 router.delete("/salary-slips/:id", verifyToken, deleteSalarySlip);
-router.put("/edit-employees/:id", verifyToken, updateUser); // Changed from /users/:id to /employees/:id
-router.delete("/delete-employees/:id", verifyToken, deleteUser); // Changed from /users/:id to /employees/:id
+router.put("/edit-employees/:id", verifyToken, updateUser);
+router.delete("/delete-employees/:id", verifyToken, deleteUser);
 router.post("/add-employees", verifyToken, addEmployee);
 router.get("/employees", verifyToken, getAllEmployees);
 

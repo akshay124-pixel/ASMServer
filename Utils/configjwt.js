@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const secretKey = require("./config cypt");
+const secretKey = require("./configcypt");
 function generateToken(user) {
   const payload = {
     id: user._id,
