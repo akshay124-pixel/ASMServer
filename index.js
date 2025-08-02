@@ -21,29 +21,6 @@ app.use(express.json());
 
 app.use("/salary_slips", express.static(path.join(__dirname, "salary_slips")));
 
-// Custom route for PDF serving
-app.get("/salary_slips/:fileName", (req, res) => {
-  const fileName = req.params.fileName;
-  const filePath = path.join(__dirname, "salary_slips", fileName);
-
-  if (!fs.existsSync(filePath)) {
-    console.error(`File not found: ${filePath}`);
-    return res.status(404).json({ error: "File not found" });
-  }
-
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
-  res.setHeader("Access-Control-Allow-Origin", "https://asms-wine.vercel.app");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  const fileStream = fs.createReadStream(filePath);
-  fileStream.pipe(res);
-
-  fileStream.on("error", (err) => {
-    console.error(`Error streaming file ${filePath}:`, err.stack);
-    res.status(500).json({ error: "Error serving file" });
-  });
-});
 // Route
 app.use("/auth", LoginRoute);
 app.use("/user", SignupRoute);
