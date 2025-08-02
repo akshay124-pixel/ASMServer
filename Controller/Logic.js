@@ -286,20 +286,6 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    if (pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid PAN format",
-      });
-    }
-
-    if (adhaar && !/^\d{12}$/.test(adhaar)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid Aadhaar format",
-      });
-    }
-
     if (joindate && isNaN(Date.parse(joindate))) {
       return res.status(400).json({
         success: false,
