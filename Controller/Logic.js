@@ -45,18 +45,16 @@ exports.generateSalarySlip = async (req, res) => {
     const calculatedSalary = dailySalary * daysWorked;
 
     const pdfName = `${user.username}_${month.replace(/\s+/g, "_")}.pdf`;
-    const pdfDir = path.join(__dirname, "../salary_slips");
+    const pdfDir = path.join(__dirname, "salary_slips");
     const pdfPath = path.join(pdfDir, pdfName);
 
     ensureDirectoryExistence(pdfDir);
 
-    // Create PDF and wait for it to finish writing
     await new Promise((resolve, reject) => {
       const doc = new PDFDocument({ size: "A4", margin: 50 });
       const stream = fs.createWriteStream(pdfPath);
       doc.pipe(stream);
 
-      // PDF content (unchanged)
       doc
         .font("Helvetica-Bold")
         .fontSize(24)
@@ -68,6 +66,11 @@ exports.generateSalarySlip = async (req, res) => {
 
       stream.on("finish", () => {
         console.log(`PDF created successfully at: ${pdfPath}`);
+        if (fs.existsSync(pdfPath)) {
+          console.log(`Confirmed: PDF file exists at ${pdfPath}`);
+        } else {
+          console.error(`Error: PDF file not found at ${pdfPath}`);
+        }
         resolve();
       });
       stream.on("error", (err) => {
@@ -76,13 +79,11 @@ exports.generateSalarySlip = async (req, res) => {
       });
     });
 
-    // Verify the file exists
     if (!fs.existsSync(pdfPath)) {
       console.error(`PDF file not found at: ${pdfPath}`);
       return res.status(500).json({ error: "Failed to generate PDF file" });
     }
 
-    // Save to DB after PDF generation
     const salarySlip = new SalarySlip({
       userId,
       userName: user.username,
@@ -94,8 +95,8 @@ exports.generateSalarySlip = async (req, res) => {
 
     await salarySlip.save();
 
-    // Construct the public URL for the PDF
-    const pdfUrl = `/salary_slips/${pdfName}`;
+    const baseUrl = "https://asmserver.onrender.com";
+    const pdfUrl = `${baseUrl}/salary_slips/${pdfName}`;
     console.log(`PDF URL: ${pdfUrl}`);
 
     res.json({ _id: salarySlip._id, pdfUrl });
@@ -104,18 +105,15 @@ exports.generateSalarySlip = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 exports.getAllSalarySlips = async (req, res) => {
   try {
     const slips = await SalarySlip.find().populate("userId");
+    const baseUrl = "https://asmserver.onrender.com";
     res.json(
       slips.map((slip) => {
-        // Normalize the pdfPath to use forward slashes
         const normalizedPath = slip.pdfPath.replace(/\\/g, "/");
-        // Extract the filename from the path
         const fileName = path.basename(normalizedPath);
-        // Construct the pdfUrl using the server’s base URL
-        const pdfUrl = `/salary_slips/${fileName}`;
+        const pdfUrl = `${baseUrl}/salary_slips/${fileName}`;
         return {
           _id: slip._id,
           user: slip.userName,
