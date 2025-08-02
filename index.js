@@ -5,18 +5,9 @@ const LoginRoute = require("./Router/LoginRoute");
 const Routes = require("./Router/Routes");
 const cors = require("cors");
 const path = require("path");
-const fs = require("fs");
 
 const app = express();
 const port = 4000;
-
-const ensureDirectoryExistence = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-};
-
-ensureDirectoryExistence(path.join(__dirname, "salary_slips"));
 
 app.use(
   cors({
@@ -30,10 +21,12 @@ app.use(express.json());
 
 app.use("/salary_slips", express.static(path.join(__dirname, "salary_slips")));
 
+// Route
 app.use("/auth", LoginRoute);
 app.use("/user", SignupRoute);
 app.use("/api", Routes);
 
+// Start server after DB connection
 dbconnect().then(() => {
   app.listen(port, () => console.log(`App listening on port ${port}!`));
 });
