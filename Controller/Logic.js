@@ -42,128 +42,167 @@ exports.generateSalarySlip = async (req, res) => {
     // Header Section
     doc
       .font("Helvetica-Bold")
-      .fontSize(24)
-      .fillColor("#1e3a8a")
-      .text("Promark Techsolutions Pvt. Ltd.", 50, 30, { align: "center" });
+      .fontSize(14)
+      .fillColor("#000000")
+      .text("PAY SLIP", 50, 30, { align: "center" });
 
     doc
+      .font("Helvetica")
       .fontSize(10)
-      .fillColor("#f97316")
-      .text("Proudly ", 230, 60, { continued: true })
-      .fillColor("yellow")
-      .text("Made ", { continued: true })
-      .fillColor("#16a34a")
-      .text("in India", { continued: false });
-    doc
-      .moveTo(50, 80)
-      .lineTo(550, 80)
-      .strokeColor("#3b82f6")
-      .lineWidth(2)
-      .stroke();
+      .fillColor("#000000")
+      .text("PROMARK TECHSOLUTIONS PRIVATE LIMITED", 50, 50, {
+        align: "center",
+      })
+      .text(
+        "Regd Office: NH-95, Morinda By-Pass, Village Baddi Madouli, Morinda, Distt Ropar-140413 Punjab",
+        50,
+        65,
+        { align: "center" }
+      )
+      .text("E-mail: info@promark.co.in, www.promark.co.in", 50, 80, {
+        align: "center",
+      })
+      .text(
+        "CIN: U36109PB2010PTC034337  GST: 03AAFCP7669C1ZF  PAN: AAFCP7669C",
+        50,
+        95,
+        { align: "center" }
+      );
 
     // Title
     doc
       .font("Helvetica-Bold")
-      .fontSize(18)
-      .fillColor("#1e40af")
-      .text(`Salary Slip for ${month}`, 50, 100, { align: "center" });
+      .fontSize(12)
+      .fillColor("#000000")
+      .text(`Salary For The Month ${month}`, 50, 120, { align: "center" });
 
     // Employee Details Section
     doc
-      .font("Helvetica-Bold")
-      .fontSize(14)
-      .fillColor("#1e40af")
-      .text("Employee Details", 50, 140);
-    doc
-      .moveTo(50, 155)
-      .lineTo(550, 155)
-      .strokeColor("#e0e7ff")
-      .lineWidth(1)
-      .stroke();
-
-    doc
       .font("Helvetica")
-      .fontSize(12)
-      .fillColor("#1f2937")
-      .text(`Name: ${user.username}`, 50, 170)
-      .text(`Employee ID: ${user.employeeid}`, 50, 190)
-      .text(`Email: ${user.email}`, 50, 210);
-    if (user.joindate) {
-      doc.text(
-        `Join Date: ${new Date(user.joindate).toLocaleDateString()}`,
+      .fontSize(10)
+      .fillColor("#000000")
+      .text(`Employee ID: ${user.employeeid || "N/A"}`, 50, 150)
+      .text(`PAN: ${user.pan || "N/A"}`, 300, 150)
+      .text(`Employee Name: ${user.username}`, 50, 165)
+      .text(`Aadhaar No.: ${user.adhaar || "N/A"}`, 300, 165)
+      .text(
+        `Date of Joining: ${
+          user.joindate ? new Date(user.joindate).toLocaleDateString() : "N/A"
+        }`,
         50,
-        230
-      );
-    }
-    if (user.pan) {
-      doc.text(`PAN: ${user.pan}`, 50, 250);
-    }
-    if (user.adhaar) {
-      doc.text(`Aadhaar: ${user.adhaar}`, 50, 270);
-    }
-    if (user.deg) {
-      doc.text(`Designation: ${user.deg}`, 50, 290);
-    }
+        180
+      )
+      .text(`Designation: ${user.deg || "N/A"}`, 300, 180);
 
-    // Salary Details Section
+    // Earnings and Deductions Table
     doc
       .font("Helvetica-Bold")
-      .fontSize(14)
-      .fillColor("#1e40af")
-      .text("Salary Details", 50, 330);
-    doc
-      .moveTo(50, 345)
-      .lineTo(550, 345)
-      .strokeColor("#e0e7ff")
-      .lineWidth(1)
-      .stroke();
+      .fontSize(10)
+      .text("Gross Earnings", 50, 210)
+      .text("Deductions", 300, 210);
 
-    doc
-      .font("Helvetica")
-      .fontSize(12)
-      .fillColor("#1f2937")
-      .text(`Month: ${month}`, 50, 360)
-      .text(`Days Worked: ${daysWorked}`, 50, 380)
-      .text(`Daily Salary Rate: ₹${dailySalary.toFixed(2)}`, 50, 400)
-      .font("Helvetica-Bold")
-      .text(`Total Salary: ₹${calculatedSalary.toFixed(2)}`, 50, 420);
-
-    // Company Contact Information
-    doc
-      .moveTo(50, 460)
-      .lineTo(550, 460)
-      .strokeColor("#e0e7ff")
-      .lineWidth(1)
-      .stroke();
+    // Table Headers
     doc
       .font("Helvetica")
       .fontSize(10)
-      .fillColor("#4b5563")
-      .text(
-        "Promark Corporate Mansion, Plot No E-250, Industrial Area 8-B, Mohali, Punjab, India-160071",
-        50,
-        480,
-        { align: "center" }
-      )
-      .text("Contact: 1800 103 8878 | Email: info@promark.co.in", 50, 495, {
-        align: "center",
-      });
+      .text("Particulars", 50, 225)
+      .text("Amount", 200, 225)
+      .text("Particulars", 300, 225)
+      .text("Amount", 450, 225);
+
+    // Table Border
+    doc
+      .moveTo(50, 220)
+      .lineTo(550, 220)
+      .moveTo(50, 240)
+      .lineTo(550, 240)
+      .moveTo(50, 220)
+      .lineTo(50, 340)
+      .moveTo(200, 220)
+      .lineTo(200, 340)
+      .moveTo(300, 220)
+      .lineTo(300, 340)
+      .moveTo(450, 220)
+      .lineTo(450, 340)
+      .moveTo(550, 220)
+      .lineTo(550, 340)
+      .strokeColor("#000000")
+      .lineWidth(1)
+      .stroke();
+
+    // Earnings Data
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .text("Basic Salary", 55, 245)
+      .text(`₹${user.baseSalary.toFixed(2)}`, 200, 245)
+      .text("House Rent Allowance", 55, 260)
+      .text("₹0.00", 200, 260)
+      .text("Transport Allowance", 55, 275)
+      .text("₹0.00", 200, 275)
+      .text("Medical Allowance", 55, 290)
+      .text("₹0.00", 200, 290)
+      .text("Others", 55, 305)
+      .text("₹0.00", 200, 305)
+      .text("Bonus", 55, 320)
+      .text("₹0.00", 200, 320);
+
+    // Deductions Data
+    doc
+      .text("Income Tax", 305, 245)
+      .text("₹0.00", 450, 245)
+      .text("Provident Fund", 305, 260)
+      .text("₹0.00", 450, 260)
+      .text("ESI", 305, 275)
+      .text("₹0.00", 450, 275)
+      .text("Professional Tax", 305, 290)
+      .text("₹0.00", 450, 290)
+      .text("Others", 305, 305)
+      .text("₹0.00", 450, 305)
+      .text("Advance", 305, 320)
+      .text("₹0.00", 450, 320);
+
+    // Total Earnings and Deductions
+    doc
+      .font("Helvetica-Bold")
+      .text("Total Earnings", 55, 345)
+      .text(`₹${calculatedSalary.toFixed(2)}`, 200, 345)
+      .text("Total Deductions", 305, 345)
+      .text("₹0.00", 450, 345);
+
+    // Net Payable and Paid Days
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .text(`Net Payable: ₹${calculatedSalary.toFixed(2)}`, 50, 370)
+      .text(`Paid Days: ${daysWorked}`, 300, 370);
+
+    // Signature
+    doc
+      .font("Helvetica")
+      .fontSize(10)
+      .text("Sign of Authorized Person", 50, 400)
+      .moveTo(50, 415)
+      .lineTo(200, 415)
+      .strokeColor("#000000")
+      .lineWidth(1)
+      .stroke();
 
     // Footer
     doc
       .font("Helvetica-Oblique")
       .fontSize(8)
-      .fillColor("#6b7280")
+      .fillColor("#000000")
       .text(
         "This is a system-generated document. For queries, contact HR at hr@promark.co.in.",
         50,
-        520,
+        450,
         { align: "center" }
       )
       .text(
         "© 2025 Promark Techsolutions Pvt. Ltd. All rights reserved.",
         50,
-        535,
+        465,
         { align: "center" }
       );
 
@@ -185,7 +224,6 @@ exports.generateSalarySlip = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 // Other controller functions remain unchanged
 exports.getAllUsers = async (req, res) => {
   try {
