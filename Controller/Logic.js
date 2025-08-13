@@ -12,14 +12,33 @@ const ensureDirectoryExistence = (dirPath) => {
 };
 
 exports.generateSalarySlip = async (req, res) => {
-  const { userId, month, daysWorked } = req.body;
+  const {
+    userId,
+    month,
+    daysWorked,
+    incomeTax = 0,
+    houseRentAllowance = 0,
+    transportAllowance = 0,
+    medicalAllowance = 0,
+    othersEarnings = 0,
+    bonus = 0,
+    ot = 0,
+    providentFund = 0,
+    esi = 0,
+    professionalTax = 0,
+    othersDeductions = 0,
+    advance = 0,
+  } = req.body;
+
   try {
     if (req.user.role !== "Accounts") {
       return res.status(403).json({ error: "Access denied" });
     }
 
     if (!userId || !month || !daysWorked) {
-      return res.status(400).json({ error: "All fields are required" });
+      return res
+        .status(400)
+        .json({ error: "User ID, month, and days worked are required" });
     }
 
     const user = await Employee.findById(userId);
@@ -29,6 +48,22 @@ exports.generateSalarySlip = async (req, res) => {
 
     const dailySalary = user.baseSalary / 26;
     const calculatedSalary = dailySalary * daysWorked;
+    const totalEarnings =
+      calculatedSalary +
+      Number(houseRentAllowance) +
+      Number(transportAllowance) +
+      Number(medicalAllowance) +
+      Number(othersEarnings) +
+      Number(bonus) +
+      Number(ot);
+    const totalDeductions =
+      Number(incomeTax) +
+      Number(providentFund) +
+      Number(esi) +
+      Number(professionalTax) +
+      Number(othersDeductions) +
+      Number(advance);
+    const netPayable = totalEarnings - totalDeductions;
 
     const pdfName = `${user.username}_${month.replace(/\s+/g, "_")}.pdf`;
     const pdfDir = path.join(__dirname, "../salary_slips");
@@ -116,6 +151,16 @@ exports.generateSalarySlip = async (req, res) => {
       .lineTo(550, 220)
       .moveTo(50, 240)
       .lineTo(550, 240)
+      .moveTo(50, 255)
+      .lineTo(550, 255)
+      .moveTo(50, 270)
+      .lineTo(550, 270)
+      .moveTo(50, 285)
+      .lineTo(550, 285)
+      .moveTo(50, 300)
+      .lineTo(550, 300)
+      .moveTo(50, 315)
+      .lineTo(550, 315)
       .moveTo(50, 220)
       .lineTo(50, 340)
       .moveTo(200, 220)
@@ -135,46 +180,49 @@ exports.generateSalarySlip = async (req, res) => {
       .font("Helvetica")
       .fontSize(10)
       .text("Basic Salary", 55, 245)
-      .text(`₹${user.baseSalary.toFixed(2)}`, 200, 245)
+      .text(`₹${calculatedSalary.toFixed(2)}`, 200, 245)
       .text("House Rent Allowance", 55, 260)
-      .text("₹0.00", 200, 260)
+      .text(`₹${Number(houseRentAllowance).toFixed(2)}`, 200, 260)
       .text("Transport Allowance", 55, 275)
-      .text("₹0.00", 200, 275)
+      .text(`₹${Number(transportAllowance).toFixed(2)}`, 200, 275)
       .text("Medical Allowance", 55, 290)
-      .text("₹0.00", 200, 290)
+      .text(`₹${Number(medicalAllowance).toFixed(2)}`, 200, 290)
       .text("Others", 55, 305)
-      .text("₹0.00", 200, 305)
+      .text(`₹${Number(othersEarnings).toFixed(2)}`, 200, 305)
       .text("Bonus", 55, 320)
-      .text("₹0.00", 200, 320);
+      .text(`₹${Number(bonus).toFixed(2)}`, 200, 320)
+      .text("OT", 55, 335)
+      .text(`₹${Number(ot).toFixed(2)}`, 200, 335);
 
     // Deductions Data
     doc
       .text("Income Tax", 305, 245)
-      .text("₹0.00", 450, 245)
+      .text(`₹${Number(incomeTax).toFixed(2)}`, 450, 245)
       .text("Provident Fund", 305, 260)
-      .text("₹0.00", 450, 260)
+      .text(`₹${Number(providentFund).toFixed(2)}`, 450, 260)
       .text("ESI", 305, 275)
-      .text("₹0.00", 450, 275)
+      .text(`₹${Number(esi).toFixed(2)}`, 450, 275)
       .text("Professional Tax", 305, 290)
-      .text("₹0.00", 450, 290)
+      .text(`₹${Number(professionalTax).toFixed(2)}`, 450, 290)
       .text("Others", 305, 305)
-      .text("₹0.00", 450, 305)
+      .text(`₹${Number(othersDeductions).toFixed(2)}`, 450, 305)
       .text("Advance", 305, 320)
-      .text("₹0.00", 450, 320);
+      .text(`₹${Number(advance).toFixed(2)}`, 450, 320);
 
     // Total Earnings and Deductions
     doc
       .font("Helvetica-Bold")
+      .fontSize(10)
       .text("Total Earnings", 55, 345)
-      .text(`₹${calculatedSalary.toFixed(2)}`, 200, 345)
+      .text(`₹${totalEarnings.toFixed(2)}`, 200, 345)
       .text("Total Deductions", 305, 345)
-      .text("₹0.00", 450, 345);
+      .text(`₹${totalDeductions.toFixed(2)}`, 450, 345);
 
     // Net Payable and Paid Days
     doc
       .font("Helvetica")
       .fontSize(10)
-      .text(`Net Payable: ₹${calculatedSalary.toFixed(2)}`, 50, 370)
+      .text(`Net Payable: ₹${netPayable.toFixed(2)}`, 50, 370)
       .text(`Paid Days: ${daysWorked}`, 300, 370);
 
     // Signature
@@ -213,7 +261,7 @@ exports.generateSalarySlip = async (req, res) => {
       userName: user.username,
       month,
       daysWorked,
-      salary: calculatedSalary,
+      salary: netPayable,
       pdfPath,
     });
     await salarySlip.save();
@@ -224,7 +272,8 @@ exports.generateSalarySlip = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-// Other controller functions remain unchanged
+
+// Other controller functions (unchanged)
 exports.getAllUsers = async (req, res) => {
   try {
     if (req.user.role !== "Accounts") {
