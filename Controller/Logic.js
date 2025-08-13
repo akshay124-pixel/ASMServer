@@ -422,7 +422,7 @@ exports.updateUser = async (req, res) => {
       success: true,
       message: "Employee updated successfully",
       data: {
-        id: employee._id,
+        _id: employee._id, // Use _id instead of id
         username: employee.username,
         email: employee.email,
         baseSalary: employee.baseSalary,
@@ -538,7 +538,7 @@ exports.addEmployee = async (req, res) => {
       success: true,
       message: "Employee added successfully",
       data: {
-        id: employee._id,
+        _id: employee._id, // Use _id instead of id
         username: employee.username,
         email: employee.email,
         baseSalary: employee.baseSalary,
