@@ -71,186 +71,284 @@ exports.generateSalarySlip = async (req, res) => {
 
     ensureDirectoryExistence(pdfDir);
 
-    const doc = new PDFDocument({ size: "A4", margin: 50 });
+    const doc = new PDFDocument({ size: "A4", margin: 40 });
     doc.pipe(fs.createWriteStream(pdfPath));
 
-    // Header Section
+    doc.registerFont("Helvetica", "Helvetica");
+    doc.registerFont("Helvetica-Bold", "Helvetica-Bold");
+    doc.registerFont("Times-Roman", "Times-Roman");
+    doc.registerFont("Times-Bold", "Times-Bold");
+
+    const primaryColor = "#003087";
+    const accentColor = "#4B5EAA";
+    const textColor = "#1A202C";
+    const borderColor = "#D1D5DB";
+
+    // Header
     doc
-      .font("Helvetica-Bold")
-      .fontSize(14)
-      .fillColor("#000000")
-      .text("PAY SLIP", 50, 30, { align: "center" });
+      .fillColor(primaryColor)
+      .font("Times-Bold")
+      .fontSize(16)
+      .text("PAY SLIP", 0, 30, { align: "center" });
 
     doc
+      .fillColor(textColor)
       .font("Helvetica")
       .fontSize(10)
-      .fillColor("#000000")
-      .text("PROMARK TECHSOLUTIONS PRIVATE LIMITED", 50, 50, {
-        align: "center",
-      })
+      .text("PROMARK TECHSOLUTIONS PRIVATE LIMITED", 0, 55, { align: "center" })
       .text(
         "Regd Office: NH-95, Morinda By-Pass, Village Baddi Madouli, Morinda, Distt Ropar-140413 Punjab",
-        50,
-        65,
+        0,
+        70,
         { align: "center" }
       )
-      .text("E-mail: info@promark.co.in, www.promark.co.in", 50, 80, {
+      .text("E-mail: info@promark.co.in | Website: www.promark.co.in", 0, 85, {
         align: "center",
       })
       .text(
-        "CIN: U36109PB2010PTC034337  GST: 03AAFCP7669C1ZF  PAN: AAFCP7669C",
-        50,
-        95,
+        "CIN: U36109PB2010PTC034337 | GST: 03AAFCP7669C1ZF | PAN: AAFCP7669C",
+        0,
+        100,
         { align: "center" }
       );
 
-    // Title
     doc
-      .font("Helvetica-Bold")
-      .fontSize(12)
-      .fillColor("#000000")
-      .text(`Salary For The Month ${month}`, 50, 120, { align: "center" });
+      .moveTo(40, 120)
+      .lineTo(555, 120)
+      .lineWidth(1)
+      .strokeColor(accentColor)
+      .stroke();
 
-    // Employee Details Section
     doc
+      .fillColor(primaryColor)
+      .font("Times-Bold")
+      .fontSize(14)
+      .text(`Salary Slip for ${month}`, 0, 135, { align: "center" });
+
+    // Employee details
+    const leftColumnX = 40;
+    const rightColumnX = 320;
+    doc
+      .fillColor(textColor)
       .font("Helvetica")
       .fontSize(10)
-      .fillColor("#000000")
-      .text(`Employee ID: ${user.employeeid || "N/A"}`, 50, 150)
-      .text(`PAN: ${user.pan || "N/A"}`, 300, 150)
-      .text(`Employee Name: ${user.username}`, 50, 165)
-      .text(`Aadhaar No.: ${user.adhaar || "N/A"}`, 300, 165)
+      .text(`Employee ID: ${user.employeeid || "N/A"}`, leftColumnX, 165)
+      .text(`PAN: ${user.pan || "N/A"}`, rightColumnX, 165)
+      .text(`Employee Name: ${user.username}`, leftColumnX, 180)
+      .text(`Aadhaar No.: ${user.adhaar || "N/A"}`, rightColumnX, 180)
       .text(
         `Date of Joining: ${
           user.joindate ? new Date(user.joindate).toLocaleDateString() : "N/A"
         }`,
-        50,
-        180
+        leftColumnX,
+        195
       )
-      .text(`Designation: ${user.deg || "N/A"}`, 300, 180);
+      .text(`Designation: ${user.deg || "N/A"}`, rightColumnX, 195);
 
-    // Earnings and Deductions Table
+    // Table positions (FIXED SPACING)
+    const tableTop = 225;
+    const tableLeft = 40;
+    const tableRight = 555;
+
+    // Define column widths to fit total content width (515 points)
+    const earningsPartWidth = 180; // Earnings particulars
+    const earningsAmtWidth = 70; // Earnings amounts
+    const deductionsPartWidth = 190; // Deductions particulars
+    const deductionsAmtWidth = 75; // Deductions amounts
+
+    // Calculate column starts
+    const earningsCol1 = tableLeft + 5; // 45 (earnings particulars text x)
+    const earningsAmtX = tableLeft + earningsPartWidth; // 220 (earnings amounts x)
+    const deductionsCol1 = tableLeft + earningsPartWidth + earningsAmtWidth; // 290 (deductions start)
+    const deductionsCol1Text = deductionsCol1 + 5; // 295 (deductions particulars text x)
+    const deductionsAmtX = deductionsCol1 + deductionsPartWidth; // 480 (deductions amounts x)
+
+    // Table headers
     doc
+      .fillColor(primaryColor)
+      .font("Helvetica-Bold")
+      .fontSize(11)
+      .text("Gross Earnings", tableLeft, tableTop)
+      .text("Deductions", deductionsCol1 + 15, tableTop);
+
+    doc
+      .fillColor(textColor)
+      .font("Helvetica")
+      .fontSize(10)
+      .text("Particulars", earningsCol1, tableTop + 20)
+      .text("Amount", earningsAmtX, tableTop + 20, {
+        width: earningsAmtWidth,
+        align: "right",
+      })
+      .text("Particulars", deductionsCol1Text, tableTop + 20)
+      .text("Amount", deductionsAmtX, tableTop + 20, {
+        width: deductionsAmtWidth,
+        align: "right",
+      });
+
+    // Background
+    doc
+      .rect(tableLeft, tableTop + 15, tableRight - tableLeft, 140)
+      .fillOpacity(0.05)
+      .fill(accentColor)
+      .fillOpacity(1);
+
+    // Table borders
+    const rowLines = [15, 35, 50, 65, 80, 95, 110, 125, 140, 155]; // Extended slightly if needed for consistency
+    rowLines.forEach((y) => {
+      doc.moveTo(tableLeft, tableTop + y).lineTo(tableRight, tableTop + y);
+    });
+
+    const verticalLines = [
+      tableLeft,
+      earningsAmtX,
+      deductionsCol1,
+      deductionsAmtX,
+      tableRight,
+    ];
+    verticalLines.forEach((x) => {
+      doc.moveTo(x, tableTop + 15).lineTo(x, tableTop + 155); // Extended y for totals if desired
+    });
+
+    doc.strokeColor(borderColor).lineWidth(0.5).stroke();
+
+    // Earnings data
+    doc
+      .fillColor(textColor)
+      .font("Helvetica")
+      .fontSize(10)
+      .text("Basic Salary", earningsCol1, tableTop + 40)
+      .text(calculatedSalary.toFixed(2), earningsAmtX, tableTop + 40, {
+        width: earningsAmtWidth,
+        align: "right",
+      })
+      .text("House Rent Allowance", earningsCol1, tableTop + 55)
+      .text(
+        Number(houseRentAllowance).toFixed(2),
+        earningsAmtX,
+        tableTop + 55,
+        { width: earningsAmtWidth, align: "right" }
+      )
+      .text("Transport Allowance", earningsCol1, tableTop + 70)
+      .text(
+        Number(transportAllowance).toFixed(2),
+        earningsAmtX,
+        tableTop + 70,
+        { width: earningsAmtWidth, align: "right" }
+      )
+      .text("Medical Allowance", earningsCol1, tableTop + 85)
+      .text(Number(medicalAllowance).toFixed(2), earningsAmtX, tableTop + 85, {
+        width: earningsAmtWidth,
+        align: "right",
+      })
+      .text("Others", earningsCol1, tableTop + 100)
+      .text(Number(othersEarnings).toFixed(2), earningsAmtX, tableTop + 100, {
+        width: earningsAmtWidth,
+        align: "right",
+      })
+      .text("Bonus", earningsCol1, tableTop + 115)
+      .text(Number(bonus).toFixed(2), earningsAmtX, tableTop + 115, {
+        width: earningsAmtWidth,
+        align: "right",
+      })
+      .text("Overtime", earningsCol1, tableTop + 130)
+      .text(Number(ot).toFixed(2), earningsAmtX, tableTop + 130, {
+        width: earningsAmtWidth,
+        align: "right",
+      });
+
+    // Deductions data
+    doc
+      .text("Income Tax", deductionsCol1Text, tableTop + 40)
+      .text(Number(incomeTax).toFixed(2), deductionsAmtX, tableTop + 40, {
+        width: deductionsAmtWidth,
+        align: "right",
+      })
+      .text("Provident Fund", deductionsCol1Text, tableTop + 55)
+      .text(Number(providentFund).toFixed(2), deductionsAmtX, tableTop + 55, {
+        width: deductionsAmtWidth,
+        align: "right",
+      })
+      .text("ESI", deductionsCol1Text, tableTop + 70)
+      .text(Number(esi).toFixed(2), deductionsAmtX, tableTop + 70, {
+        width: deductionsAmtWidth,
+        align: "right",
+      })
+      .text("Professional Tax", deductionsCol1Text, tableTop + 85)
+      .text(Number(professionalTax).toFixed(2), deductionsAmtX, tableTop + 85, {
+        width: deductionsAmtWidth,
+        align: "right",
+      })
+      .text("Others", deductionsCol1Text, tableTop + 100)
+      .text(
+        Number(othersDeductions).toFixed(2),
+        deductionsAmtX,
+        tableTop + 100,
+        { width: deductionsAmtWidth, align: "right" }
+      )
+      .text("Advance", deductionsCol1Text, tableTop + 115)
+      .text(Number(advance).toFixed(2), deductionsAmtX, tableTop + 115, {
+        width: deductionsAmtWidth,
+        align: "right",
+      });
+
+    // Totals
+    doc
+      .fillColor(primaryColor)
       .font("Helvetica-Bold")
       .fontSize(10)
-      .text("Gross Earnings", 50, 210)
-      .text("Deductions", 300, 210);
+      .text("Total Earnings", earningsCol1, tableTop + 145)
+      .text(totalEarnings.toFixed(2), earningsAmtX, tableTop + 145, {
+        width: earningsAmtWidth,
+        align: "right",
+      })
+      .text("Total Deductions", deductionsCol1Text, tableTop + 145)
+      .text(totalDeductions.toFixed(2), deductionsAmtX, tableTop + 145, {
+        width: deductionsAmtWidth,
+        align: "right",
+      });
 
-    // Table Headers
+    // Net payable
     doc
-      .font("Helvetica")
-      .fontSize(10)
-      .text("Particulars", 50, 225)
-      .text("Amount", 200, 225)
-      .text("Particulars", 300, 225)
-      .text("Amount", 450, 225);
-
-    // Table Border
-    doc
-      .moveTo(50, 220)
-      .lineTo(550, 220)
-      .moveTo(50, 240)
-      .lineTo(550, 240)
-      .moveTo(50, 255)
-      .lineTo(550, 255)
-      .moveTo(50, 270)
-      .lineTo(550, 270)
-      .moveTo(50, 285)
-      .lineTo(550, 285)
-      .moveTo(50, 300)
-      .lineTo(550, 300)
-      .moveTo(50, 315)
-      .lineTo(550, 315)
-      .moveTo(50, 220)
-      .lineTo(50, 340)
-      .moveTo(200, 220)
-      .lineTo(200, 340)
-      .moveTo(300, 220)
-      .lineTo(300, 340)
-      .moveTo(450, 220)
-      .lineTo(450, 340)
-      .moveTo(550, 220)
-      .lineTo(550, 340)
-      .strokeColor("#000000")
-      .lineWidth(1)
-      .stroke();
-
-    // Earnings Data
-    doc
-      .font("Helvetica")
-      .fontSize(10)
-      .text("Basic Salary", 55, 245)
-      .text(`₹${calculatedSalary.toFixed(2)}`, 200, 245)
-      .text("House Rent Allowance", 55, 260)
-      .text(`₹${Number(houseRentAllowance).toFixed(2)}`, 200, 260)
-      .text("Transport Allowance", 55, 275)
-      .text(`₹${Number(transportAllowance).toFixed(2)}`, 200, 275)
-      .text("Medical Allowance", 55, 290)
-      .text(`₹${Number(medicalAllowance).toFixed(2)}`, 200, 290)
-      .text("Others", 55, 305)
-      .text(`₹${Number(othersEarnings).toFixed(2)}`, 200, 305)
-      .text("Bonus", 55, 320)
-      .text(`₹${Number(bonus).toFixed(2)}`, 200, 320)
-      .text("OT", 55, 335)
-      .text(`₹${Number(ot).toFixed(2)}`, 200, 335);
-
-    // Deductions Data
-    doc
-      .text("Income Tax", 305, 245)
-      .text(`₹${Number(incomeTax).toFixed(2)}`, 450, 245)
-      .text("Provident Fund", 305, 260)
-      .text(`₹${Number(providentFund).toFixed(2)}`, 450, 260)
-      .text("ESI", 305, 275)
-      .text(`₹${Number(esi).toFixed(2)}`, 450, 275)
-      .text("Professional Tax", 305, 290)
-      .text(`₹${Number(professionalTax).toFixed(2)}`, 450, 290)
-      .text("Others", 305, 305)
-      .text(`₹${Number(othersDeductions).toFixed(2)}`, 450, 305)
-      .text("Advance", 305, 320)
-      .text(`₹${Number(advance).toFixed(2)}`, 450, 320);
-
-    // Total Earnings and Deductions
-    doc
-      .font("Helvetica-Bold")
-      .fontSize(10)
-      .text("Total Earnings", 55, 345)
-      .text(`₹${totalEarnings.toFixed(2)}`, 200, 345)
-      .text("Total Deductions", 305, 345)
-      .text(`₹${totalDeductions.toFixed(2)}`, 450, 345);
-
-    // Net Payable and Paid Days
-    doc
-      .font("Helvetica")
-      .fontSize(10)
-      .text(`Net Payable: ₹${netPayable.toFixed(2)}`, 50, 370)
-      .text(`Paid Days: ${daysWorked}`, 300, 370);
+      .fillColor(primaryColor)
+      .font("Times-Bold")
+      .fontSize(12)
+      .text(
+        `Net Payable: ${netPayable.toFixed(2)}`,
+        leftColumnX,
+        tableTop + 180
+      )
+      .text(`Paid Days: ${daysWorked}`, rightColumnX, tableTop + 180, {
+        align: "right",
+      });
 
     // Signature
     doc
+      .fillColor(textColor)
       .font("Helvetica")
       .fontSize(10)
-      .text("Sign of Authorized Person", 50, 400)
-      .moveTo(50, 415)
-      .lineTo(200, 415)
-      .strokeColor("#000000")
-      .lineWidth(1)
+      .text("Authorized Signatory", leftColumnX, tableTop + 210)
+      .moveTo(leftColumnX, tableTop + 225)
+      .lineTo(leftColumnX + 150, tableTop + 225)
+      .strokeColor(borderColor)
+      .lineWidth(0.5)
       .stroke();
 
     // Footer
     doc
+      .fillColor(textColor)
       .font("Helvetica-Oblique")
       .fontSize(8)
-      .fillColor("#000000")
       .text(
         "This is a system-generated document. For queries, contact HR at hr@promark.co.in.",
-        50,
-        450,
+        0,
+        tableTop + 260,
         { align: "center" }
       )
       .text(
         "© 2025 Promark Techsolutions Pvt. Ltd. All rights reserved.",
-        50,
-        465,
+        0,
+        tableTop + 275,
         { align: "center" }
       );
 
@@ -272,7 +370,6 @@ exports.generateSalarySlip = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
-
 // Other controller functions (unchanged)
 exports.getAllUsers = async (req, res) => {
   try {
