@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const dbconnect = require("./Utils/dbconnect");
 const SignupRoute = require("./Router/SignupRoute");
@@ -11,7 +12,7 @@ const port = 4000;
 
 app.use(
   cors({
-    origin: "https://asms-wine.vercel.app",
+    origin: process.env.APP_URI,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
