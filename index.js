@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const dbconnect = require("./Utils/dbconnect");
 const SignupRoute = require("./Router/SignupRoute");
@@ -8,11 +9,11 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT;
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.APP_URL,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
