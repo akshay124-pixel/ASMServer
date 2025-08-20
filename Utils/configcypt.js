@@ -1,2 +1,2 @@
-const secretkey = process.env.SECRET_KEY;
+const secretkey = "My_ASMS_Secret_Key";
 module.exports = secretkey;
